@@ -1,0 +1,63 @@
+---
+title: "CarAccelerationData"
+author: "Valerio Vaccaro"
+date: "28 settembre 2015"
+output: html_document
+---
+
+Elaborate acceleration data recorded in a car with a smartphone using the platform R
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r read_acc}
+acc_x <- read.table("./data/ANDACCX2015-07-27-18-41-41.csv",  sep=",", header=F)
+names(acc_x) <- c("Date", "Time", "Acceleration_X")
+#acc_x$Timestamp <- paste(as.Date(acc_x$Date),acc_x$Time)
+acc_x$Timestamp <- strptime(paste(as.Date(acc_x$Date),acc_x$Time), "%Y-%m-%d %H:%M:%S.")
+
+acc_y <- read.table("./data/ANDACCY2015-07-27-18-41-41.csv",  sep=",", header=F)
+names(acc_y) <- c("Date", "Time", "Acceleration_Y")
+#acc_y$Timestamp <- paste(as.Date(acc_y$Date),acc_y$Time)
+acc_y$Timestamp <- strptime(paste(as.Date(acc_y$Date),acc_y$Time), "%Y-%m-%d %H:%M:%S.")
+
+acc_z <- read.table("./data/ANDACCZ2015-07-27-18-41-41.csv",  sep=",", header=F)
+names(acc_z) <- c("Date", "Time", "Acceleration_Z")
+#acc_z$Timestamp <- paste(as.Date(acc_z$Date),acc_z$Time)
+acc_z$Timestamp <- strptime(paste(as.Date(acc_z$Date),acc_z$Time), "%Y-%m-%d %H:%M:%S.")
+
+acc <- merge(acc_x, acc_y, by=c("Date","Time","Timestamp"))
+acc <- merge(acc, acc_z, by=c("Date","Time","Timestamp"))
+```
+
+```{r read_gps}
+lat <- read.table("./data/ANDGPSLA2015-07-27-18-41-41.csv",  sep=",", header=F)
+names(lat) <- c("Date", "Time", "Latitude")
+#lat$Timestamp <- paste(as.Date(lat$Date),lat$Time)
+lat$Timestamp <- strptime(paste(as.Date(lat$Date),lat$Time), "%Y-%m-%d %H:%M:%S.")
+
+lon <- read.table("./data/ANDGPSLO2015-07-27-18-41-41.csv",  sep=",", header=F)
+names(lon) <- c("Date", "Time", "Longitude")
+#lon$Timestamp <- paste(as.Date(lon$Date),lon$Time)
+lon$Timestamp <- strptime(paste(as.Date(lon$Date),lon$Time), "%Y-%m-%d %H:%M:%S.")
+
+#alt <- read.table("./data/ANDGPSAL2015-07-27-18-41-41.csv",  sep=",", header=F)
+#names(alt) <- c("Date", "Time", "Altitude")
+#alt$Timestamp <- paste(as.Date(alt$Date),alt$Time)
+#alt$Timestamp <- strptime(paste(as.Date(alt$Date),alt$Time), "%Y-%m-%d %H:%M:%S.")
+
+points <- merge(lat, lon, by=c("Date","Time","Timestamp"))
+#points <- merge(points, alt, by=c("Date","Time","Timestamp"))
+str(acc)
+str(points)
+
+library(RgoogleMaps)
+mymap = MapBackground(lat=points$Latitude, lon=points$Longitude)
+PlotOnStaticMap(mymap, points$Latitude , points$Longitude, pch=20, col="#0000ff10", cex=points$Altitude/200)
+
+points$Timestamp <- paste(points$Timestamp,"_")
+acc$Timestamp <- paste(acc$Timestamp,"_")
+test <- merge(points, acc, by="Timestamp")
+plot(test$Latitude, test$Longitude,  pch=20, col="#0000ff10", cex=points$Altitude/200)
+barplot(test$Acceleration_X)
+
+```
